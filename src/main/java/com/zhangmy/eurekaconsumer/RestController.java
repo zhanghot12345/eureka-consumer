@@ -2,6 +2,7 @@ package com.zhangmy.eurekaconsumer;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.client.RestTemplate;
 import rx.Observable;
 import rx.Observer;
@@ -21,11 +22,26 @@ public class RestController{
     @Autowired
     private RestTemplate restTemplate;
 
+    @GetMapping("/findCity")
+    public String findCity(@RequestParam String id)
+    {
+        System.out.println(new FindCityCommand(id, restTemplate).execute());
+        return new FindCityCommand(id, restTemplate).execute();
+        //return producerRemote.getHello();
+    }
+
     @GetMapping("/get")
     public String index()
     {
         return restTemplate.getForEntity("http://SpringBootRest/hello",String.class).getBody();
         //return producerRemote.getHello();
+    }
+
+    @GetMapping("/command")
+    public String testHystrixCommand() throws ExecutionException, InterruptedException {
+        String syncResult = new IndexCommand(restTemplate).execute();
+        String noSyncResult = new IndexCommand(restTemplate).queue().get();
+        return syncResult + "    " + noSyncResult;
     }
 
     @GetMapping("/get1")
@@ -56,11 +72,12 @@ public class RestController{
     }
 
     @GetMapping("get3")
-    public String ObIndex()
-    {
+    public String ObIndex() throws InterruptedException, ExecutionException {
+        Thread.sleep(2000l);
         long start = System.currentTimeMillis();
 
         Observable<String> stringObservable = hyStrixSevice.ObGetIndex();
+        Thread.sleep(2000l);
         stringObservable.subscribe(new Observer<String>() {
             @Override
             public void onCompleted() {
@@ -79,7 +96,8 @@ public class RestController{
                 System.out.println(s);
             }
         });
-
+        // 如果需要返回结果可以用Observable.toBlocking().toFuture.get()获取真实结果
+//        System.out.println(stringObservable.toBlocking().toFuture().get());
 
         return "success";
     }

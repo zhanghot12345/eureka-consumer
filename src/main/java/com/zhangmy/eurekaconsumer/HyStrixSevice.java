@@ -1,6 +1,7 @@
 package com.zhangmy.eurekaconsumer;
 
 import com.netflix.hystrix.contrib.javanica.annotation.HystrixCommand;
+import com.netflix.hystrix.contrib.javanica.annotation.ObservableExecutionMode;
 import com.netflix.hystrix.contrib.javanica.cache.annotation.CacheResult;
 import com.netflix.hystrix.contrib.javanica.command.AsyncResult;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,7 +48,9 @@ public class HyStrixSevice {
         };
     }
 
-    @HystrixCommand
+    // observableExecutionMode = ObservableExecutionMode.LAZY = tobservable()返回clod Observable 订阅后发射
+    // observableExecutionMode = ObservableExecutionMode.EAGER = observable()返回hot OBservable 立即发射
+    @HystrixCommand(observableExecutionMode = ObservableExecutionMode.LAZY)
     public Observable<String> ObGetIndex()
     {
         return Observable.create(new OnSubscribe<String>(){
@@ -58,7 +61,9 @@ public class HyStrixSevice {
                     if (!subscriber.isUnsubscribed())
                     {
                         String index = restTemplate.getForObject("http://SpringBootRest/hello",String.class);
+                        System.out.println("observable");
                         subscriber.onNext(index);
+//                        subscriber.onNext("123");
                         subscriber.onCompleted();
                     }
                 }
